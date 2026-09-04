@@ -5,6 +5,12 @@ from __future__ import annotations
 import json
 import uuid
 
+# Railway lance `uvicorn backend.main:app` : on ajoute backend/ au sys.path pour
+# que `from chat import ...` resolve, que le module soit importe comme
+# `backend.main` ou comme `main`. Doit s'executer avant l'import de `chat`.
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
