@@ -1,0 +1,97 @@
+FAQ NOVAMART — QUESTIONS FREQUENTES
+====================================
+
+NovaMart est une boutique en ligne specialisee dans l'electronique grand public
+et les accessoires connectes. Service client : support@novamart.fr — 09 72 10 20 30
+(du lundi au samedi, 9h-19h).
+
+--------------------------------------------------------------------
+1. Comment passer une commande sur NovaMart ?
+Ajoutez vos articles au panier, cliquez sur "Commander", renseignez votre
+adresse de livraison et votre moyen de paiement, puis validez. Un e-mail de
+confirmation avec le numero de commande (format NM-XXXXXXXX) vous est envoye
+immediatement.
+
+--------------------------------------------------------------------
+2. Quels moyens de paiement acceptez-vous ?
+Carte bancaire (Visa, Mastercard, American Express), PayPal, Apple Pay,
+Google Pay et paiement en 3x sans frais via Alma pour les commandes de 100 EUR
+a 2 000 EUR.
+
+--------------------------------------------------------------------
+3. Le paiement est-il securise ?
+Oui. Toutes les transactions sont chiffrees en TLS 1.3 et traitees par notre
+prestataire certifie PCI-DSS. NovaMart ne stocke jamais votre numero de carte.
+
+--------------------------------------------------------------------
+4. Puis-je modifier ou annuler ma commande apres validation ?
+Vous pouvez modifier ou annuler votre commande gratuitement tant qu'elle n'est
+pas au statut "En preparation". Rendez-vous dans "Mon compte > Mes commandes"
+ou contactez le service client. Passe ce delai, il faudra attendre la reception
+puis effectuer un retour.
+
+--------------------------------------------------------------------
+5. Comment suivre ma commande ?
+Un lien de suivi est inclus dans l'e-mail d'expedition. Vous pouvez aussi
+consulter le statut en temps reel dans "Mon compte > Mes commandes". Les statuts
+possibles : Validee, En preparation, Expediee, En cours de livraison, Livree.
+
+--------------------------------------------------------------------
+6. Je n'ai pas recu mon e-mail de confirmation, que faire ?
+Verifiez vos courriers indesirables. Si rien sous 1 heure, connectez-vous a
+votre compte pour verifier que la commande est bien enregistree, ou contactez
+support@novamart.fr avec votre nom et la date de commande.
+
+--------------------------------------------------------------------
+7. Proposez-vous une garantie sur les produits ?
+Tous les produits neufs beneficient de la garantie legale de conformite de
+2 ans. Les produits reconditionnes "NovaMart Renewed" sont garantis 12 mois.
+Certaines marques offrent une garantie constructeur supplementaire.
+
+--------------------------------------------------------------------
+8. Qu'est-ce que la gamme "NovaMart Renewed" ?
+Ce sont des appareils reconditionnes, testes sur 45 points de controle,
+nettoyes et livres avec un cable et un chargeur neufs. Ils sont classes en
+etat "Excellent", "Tres bon" ou "Bon" et coutent 15 a 40 % moins cher que le neuf.
+
+--------------------------------------------------------------------
+9. Comment creer un compte et quels sont les avantages ?
+Cliquez sur "Mon compte > Creer un compte". Un compte permet de suivre vos
+commandes, sauvegarder vos adresses, gerer vos retours, et cumuler des points
+fidelite NovaStar (1 point par euro depense, 100 points = 5 EUR de reduction).
+
+--------------------------------------------------------------------
+10. Livrez-vous a l'international ?
+Oui, dans toute l'Union europeenne, en Suisse et au Royaume-Uni. Les delais et
+frais varient selon la zone (voir le guide de livraison). Les taxes et droits
+de douane hors UE sont a la charge du destinataire.
+
+--------------------------------------------------------------------
+11. Un article est en rupture de stock, puis-je etre prevenu du retour ?
+Oui. Sur la fiche produit, cliquez sur "M'alerter du retour en stock" et
+saisissez votre e-mail. Vous serez notifie des que l'article est de nouveau
+disponible.
+
+--------------------------------------------------------------------
+12. Comment utiliser un code promo ?
+Saisissez le code dans le champ "Code promo" a l'etape du panier, puis cliquez
+sur "Appliquer". Un seul code par commande ; les codes ne sont pas cumulables
+avec les offres "Ventes flash".
+
+--------------------------------------------------------------------
+13. Mon produit est arrive endommage ou ne fonctionne pas, que faire ?
+Contactez le service client sous 14 jours avec votre numero de commande et des
+photos. Nous organisons un remplacement ou un remboursement sans frais, avec
+une etiquette de retour prepayee.
+
+--------------------------------------------------------------------
+14. Puis-je acheter en tant que professionnel (facture avec TVA) ?
+Oui. Creez un compte "NovaMart Pro" avec votre numero SIRET et votre numero de
+TVA intracommunautaire. Vos factures HT/TTC sont disponibles dans l'espace Pro.
+
+--------------------------------------------------------------------
+15. Comment contacter le service client ?
+- E-mail : support@novamart.fr (reponse sous 24h ouvrees)
+- Telephone : 09 72 10 20 30 (lun-sam, 9h-19h)
+- Chat en ligne : bulle en bas a droite du site (lun-ven, 9h-18h)
+- Formulaire : novamart.fr/contact

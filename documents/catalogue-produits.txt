@@ -1,0 +1,90 @@
+CATALOGUE PRODUITS — NOVAMART
+=============================
+
+Extrait du catalogue electronique & accessoires. Prix TTC en euros, France.
+Stock indicatif, mis a jour quotidiennement.
+
+--------------------------------------------------------------------
+PRODUIT 1
+Reference : NM-SMTV-NOVA12
+Nom : Smartphone NovaPhone 12 (128 Go)
+Categorie : Telephonie
+Prix : 549,00 EUR
+Couleurs : Noir Sideral, Bleu Ocean, Argent
+Ecran : OLED 6,4" 120 Hz. Puce NovaChip N3. Triple capteur photo 50 Mpx.
+Batterie 4700 mAh, charge rapide 33 W. 5G, USB-C, IP68.
+Garantie : 2 ans. Livre avec cable USB-C, sans chargeur secteur.
+Stock : En stock (> 50 unites).
+
+--------------------------------------------------------------------
+PRODUIT 2
+Reference : NM-LAPT-AIR14
+Nom : Ordinateur portable NovaBook Air 14
+Categorie : Informatique
+Prix : 899,00 EUR
+Config : CPU 8 coeurs, 16 Go RAM, SSD 512 Go, ecran IPS 14" 2K.
+Poids 1,29 kg. Autonomie jusqu'a 18 h. Windows 11. 2x USB-C, 1x USB-A, HDMI.
+Garantie : 2 ans. Clavier AZERTY retro-eclaire.
+Stock : En stock (12 unites).
+
+--------------------------------------------------------------------
+PRODUIT 3
+Reference : NM-AUDIO-PODS3
+Nom : Ecouteurs sans fil NovaPods 3 ANC
+Categorie : Audio
+Prix : 129,90 EUR
+Reduction de bruit active, mode transparence, Bluetooth 5.3, multipoint.
+Autonomie 6 h (28 h avec le boitier). Boitier a charge sans fil Qi. IPX4.
+Garantie : 2 ans. Non repris si sceau d'hygiene brise (voir politique retours).
+Stock : Stock faible (5 unites).
+
+--------------------------------------------------------------------
+PRODUIT 4
+Reference : NM-WATCH-FIT2
+Nom : Montre connectee NovaWatch Fit 2
+Categorie : Objets connectes
+Prix : 179,00 EUR
+Ecran AMOLED 1,4". GPS, cardio, SpO2, suivi du sommeil, 120 modes sport.
+Etanche 5 ATM. Autonomie jusqu'a 10 jours. Compatible Android et iOS.
+Bracelets interchangeables 22 mm.
+Garantie : 2 ans.
+Stock : En stock (> 50 unites).
+
+--------------------------------------------------------------------
+PRODUIT 5
+Reference : NM-HOME-HUBMINI
+Nom : Enceinte connectee NovaHub Mini
+Categorie : Maison connectee
+Prix : 59,90 EUR
+Assistant vocal, son 360°, hub domotique Matter/Thread integre.
+Commande les lumieres, prises et thermostats compatibles. Wi-Fi + Bluetooth.
+Garantie : 2 ans.
+Stock : En stock (34 unites).
+
+--------------------------------------------------------------------
+PRODUIT 6
+Reference : NM-ACC-CHRG65
+Nom : Chargeur secteur NovaCharge 65 W GaN
+Categorie : Accessoires
+Prix : 34,90 EUR
+3 ports (2x USB-C, 1x USB-A), technologie GaN, compact. Charge un portable,
+un telephone et des ecouteurs simultanement. Cable non inclus.
+Garantie : 2 ans.
+Stock : En stock (> 100 unites).
+
+--------------------------------------------------------------------
+PRODUIT 7
+Reference : NM-ACC-PBK20
+Nom : Batterie externe NovaPower 20 000 mAh
+Categorie : Accessoires
+Prix : 44,90 EUR
+Charge rapide 30 W USB-C PD, affichage LED du niveau, recharge 2 appareils.
+Compatible avion (74 Wh).
+Garantie : 2 ans.
+Stock : Stock faible (8 unites).
+
+--------------------------------------------------------------------
+GAMME NOVAMART RENEWED (reconditionne)
+- NovaPhone 11 (64 Go) — etat Excellent — 329,00 EUR — garantie 12 mois.
+- NovaBook Air 13 (2023) — etat Tres bon — 649,00 EUR — garantie 12 mois.
+Stock variable, quantites limitees.

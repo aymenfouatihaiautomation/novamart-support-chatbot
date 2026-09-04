@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaMart — Demo widget support</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="demo-page">
+    <h1>NovaMart</h1>
+    <p>Electronique &amp; accessoires. Page de demonstration du widget de support.</p>
+    <p>Cliquez sur la bulle en bas a droite pour discuter avec notre assistant.</p>
+  </main>
+
+  <!-- Widget de chat embeddable -->
+  <script>
+    window.NOVAMART_CHAT_API = "http://localhost:8000";
+  </script>
+  <script src="widget.js" defer></script>
+</body>
+</html>
