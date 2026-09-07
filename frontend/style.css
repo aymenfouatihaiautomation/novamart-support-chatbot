@@ -1,111 +1,504 @@
-/* Page de demo */
-.demo-page {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  max-width: 640px;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
-  color: #1a1a2e;
+/* =========================================================================
+   NovaMart — landing page + chat widget
+   Style: modern Stripe/Shopify — electric blue #2563EB
+   Font: Inter (loaded via <link> in index.html)
+   ========================================================================= */
+
+:root {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light: #EFF6FF;
+  --accent: #DBEAFE;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --bg: #FFFFFF;
+  --bg-light: #F9FAFB;
+  --success: #10B981;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
   line-height: 1.6;
 }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
 
-/* --- Widget de chat NovaMart --- */
-#novamart-widget * {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+/* =============================== Header ================================= */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 64px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1160px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.logo {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+.main-nav { display: flex; gap: 26px; margin-right: auto; }
+.main-nav a {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.main-nav a:hover { color: var(--primary); }
+.btn-account {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-account:hover { background: var(--primary-dark); }
+
+/* =============================== Buttons =============================== */
+.btn {
+  display: inline-block;
+  border: 2px solid transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.2s, background 0.15s, border-color 0.15s, color 0.15s;
 }
 
-#novamart-widget-button {
+/* hero primary CTA */
+.btn-white {
+  padding: 16px 32px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+.btn-white:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* hero secondary CTA */
+.btn-outline {
+  padding: 16px 32px;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--border);
+  font-size: 16px;
+  font-weight: 700;
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* product card CTA */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+
+/* ================================ Hero ================================ */
+.hero {
+  padding: 120px 24px 100px;
+  text-align: center;
+  background-color: var(--bg-light);
+  background-image: radial-gradient(#E5E7EB 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.hero-inner { max-width: 720px; margin: 0 auto; }
+.hero-badge {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: var(--accent);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.hero h1 {
+  font-size: clamp(40px, 6vw, 68px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text);
+}
+.hero-accent { color: var(--primary); }
+.hero p {
+  max-width: 480px;
+  margin: 20px auto 40px;
+  font-size: 18px;
+  color: var(--text-muted);
+}
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ============================== Products ============================== */
+.products {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  background: var(--bg);
+}
+.products h2 {
+  margin-bottom: 48px;
+  color: var(--text);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+.product-card {
+  padding: 32px 24px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg);
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.12);
+}
+.product-emoji { margin-bottom: 20px; font-size: 56px; }
+.product-card h3 { color: var(--text); font-size: 18px; font-weight: 700; }
+.price {
+  margin: 8px 0 20px;
+  color: var(--primary);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* =============================== Footer =============================== */
+.site-footer {
+  padding: 32px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-light);
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* =========================================================================
+   CHAT WIDGET
+   ========================================================================= */
+#novamart-widget,
+#novamart-widget * { box-sizing: border-box; }
+#novamart-widget {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- Floating bubble ---- */
+#novamart-fab {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  right: 24px;
+  bottom: 24px;
+  width: 58px;
+  height: 58px;
   border: none;
-  background: #4f46e5;
+  border-radius: 50%;
+  background: var(--primary);
   color: #fff;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  z-index: 9998;
+  transition: transform 0.15s, background 0.15s;
+}
+#novamart-fab:hover {
+  transform: scale(1.08);
+  background: var(--primary-dark);
 }
 
-#novamart-widget-panel {
+/* ---- Panel ---- */
+#novamart-panel {
   position: fixed;
-  bottom: 88px;
-  right: 20px;
-  width: 340px;
-  max-width: calc(100vw - 40px);
-  height: 460px;
+  right: 24px;
+  bottom: 94px;
+  width: 370px;
+  height: 570px;
+  max-width: calc(100vw - 32px);
   max-height: calc(100vh - 120px);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-  display: none;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 9999;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#novamart-panel.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-#novamart-widget-panel.open {
+/* ---- Header ---- */
+.nm-header {
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 14px;
   display: flex;
-}
-
-.novamart-header {
-  background: #4f46e5;
+  align-items: center;
+  gap: 10px;
+  background: var(--primary);
   color: #fff;
-  padding: 12px 16px;
-  font-weight: 600;
+}
+.nm-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.nm-header-text {
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.nm-title { font-size: 14px; font-weight: 700; }
+.nm-status { font-size: 11px; color: rgba(255, 255, 255, 0.8); }
+.nm-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.nm-close:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* ---- Messages ---- */
+.nm-messages {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  background: var(--bg-light);
 }
 
-.novamart-messages {
-  flex: 1;
-  padding: 12px;
-  overflow-y: auto;
+.nm-msg { display: flex; max-width: 85%; }
+.nm-msg.bot { align-self: flex-start; gap: 8px; align-items: flex-end; }
+.nm-msg.user { align-self: flex-end; }
+.nm-msg-avatar {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+/* ---- Bubbles ---- */
+.nm-bubble {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+  word-wrap: break-word;
+}
+.nm-msg.user .nm-bubble {
+  border: none;
+  border-radius: 14px 4px 14px 14px;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+/* ---- Markdown inside bubbles ---- */
+.nm-bubble p { margin: 0 0 8px; }
+.nm-bubble p:last-child { margin-bottom: 0; }
+.nm-bubble ul,
+.nm-bubble ol { margin: 4px 0 8px; padding-left: 20px; }
+.nm-bubble li { margin-bottom: 3px; }
+.nm-bubble h1,
+.nm-bubble h2,
+.nm-bubble h3 { margin: 4px 0 6px; font-size: 14px; font-weight: 700; }
+.nm-bubble code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(17, 24, 39, 0.06);
+  font-size: 12.5px;
+}
+.nm-bubble table {
+  margin: 6px 0;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.nm-bubble th,
+.nm-bubble td {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.nm-bubble th { background: var(--bg-light); font-weight: 600; }
+.nm-bubble a { color: var(--primary); }
+.nm-msg.user .nm-bubble a { color: #fff; text-decoration: underline; }
+
+/* ---- Typing indicator ---- */
+.nm-bubble-typing { padding: 12px 14px; }
+.nm-typing { display: flex; gap: 4px; align-items: center; }
+.nm-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #CBD5E1;
+  animation: nm-bounce 1.3s infinite ease-in-out;
+}
+.nm-dot:nth-child(2) { animation-delay: 0.18s; }
+.nm-dot:nth-child(3) { animation-delay: 0.36s; }
+@keyframes nm-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---- Suggestion chips ---- */
+.nm-chips {
+  align-self: flex-start;
+  max-width: 90%;
+  margin-left: 30px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #f7f7fb;
 }
-
-.novamart-msg {
-  padding: 8px 12px;
-  border-radius: 10px;
-  max-width: 80%;
-  font-size: 14px;
-  white-space: pre-wrap;
-}
-
-.novamart-msg.user {
-  align-self: flex-end;
-  background: #4f46e5;
-  color: #fff;
-}
-
-.novamart-msg.bot {
-  align-self: flex-start;
-  background: #e9e9f2;
-  color: #1a1a2e;
-}
-
-.novamart-input {
-  display: flex;
-  border-top: 1px solid #e5e5ef;
-}
-
-.novamart-input input {
-  flex: 1;
-  border: none;
-  padding: 12px;
-  font-size: 14px;
-  outline: none;
-}
-
-.novamart-input button {
-  border: none;
-  background: #4f46e5;
-  color: #fff;
-  padding: 0 16px;
+.nm-chip {
+  padding: 8px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.nm-chip:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ---- Input bar ---- */
+.nm-input-bar {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.nm-input {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
   font-size: 14px;
+}
+.nm-input::placeholder { color: var(--text-muted); }
+.nm-send {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.12s;
+}
+.nm-send:hover { background: var(--primary-dark); transform: scale(1.05); }
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  #novamart-panel {
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  .main-nav { display: none; }
 }
