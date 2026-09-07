@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaMart — L'électronique premium, livrée chez vous</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="#">NovaMart</a>
+      <nav class="main-nav">
+        <a href="#produits">Produits</a>
+        <a href="#">Livraison</a>
+        <a href="#">Retours</a>
+        <a href="#">Contact</a>
+      </nav>
+      <button class="btn-account">Mon compte</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="hero-badge">⚡ Powered by Claude AI &amp; AWS Bedrock</span>
+        <h1>
+          L'électronique premium,<br />
+          <span class="hero-accent">livrée chez vous.</span>
+        </h1>
+        <p>Smartphones, laptops, audio et accessoires connectés</p>
+        <div class="hero-actions">
+          <a href="#produits" class="btn btn-white">Voir nos produits</a>
+          <a href="#" class="btn btn-outline">Nos offres</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="produits" class="products">
+      <h2>Nos best-sellers</h2>
+      <div class="product-grid">
+        <article class="product-card">
+          <div class="product-emoji">📱</div>
+          <h3>NovaPhone 12</h3>
+          <p class="price">549 €</p>
+          <button class="btn btn-primary">Ajouter au panier</button>
+        </article>
+        <article class="product-card">
+          <div class="product-emoji">💻</div>
+          <h3>NovaBook Air 14</h3>
+          <p class="price">899 €</p>
+          <button class="btn btn-primary">Ajouter au panier</button>
+        </article>
+        <article class="product-card">
+          <div class="product-emoji">🎧</div>
+          <h3>NovaPods 3 ANC</h3>
+          <p class="price">129 €</p>
+          <button class="btn btn-primary">Ajouter au panier</button>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">© 2026 NovaMart</footer>
+
+  <!-- Widget de chat embeddable -->
+  <script>
+    window.NOVAMART_CHAT_API = "https://web-production-fb44b.up.railway.app";
+  </script>
+  <script src="widget.js" defer></script>
+</body>
+</html>
