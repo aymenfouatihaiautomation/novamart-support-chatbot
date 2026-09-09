@@ -66,8 +66,10 @@ def chat_endpoint(payload: ChatRequest) -> ChatResponse:
 
 @app.post("/chat/stream")
 def chat_stream_endpoint(payload: ChatRequest) -> StreamingResponse:
+    session_id = payload.session_id or str(uuid.uuid4())
+
     def event_stream():
-        for chunk in stream_chat(payload.message):
+        for chunk in stream_chat(payload.message, session_id):
             yield f"data: {json.dumps(chunk)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
