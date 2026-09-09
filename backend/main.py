@@ -11,12 +11,25 @@ import uuid
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
+from dotenv import load_dotenv
+
+# Charge .env au demarrage : variables LangSmith
+# (LANGCHAIN_TRACING_V2, LANGCHAIN_API_KEY, LANGCHAIN_PROJECT) lues par le SDK
+# langsmith, + credentials AWS / Anthropic.
+load_dotenv()
+
+from langsmith import traceable
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from chat import chat, stream_chat
+from chat import chat as _chat, stream_chat as _stream_chat
+
+# Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
+chat = traceable(name="novamart-rag-pipeline")(_chat)
+stream_chat = traceable(name="novamart-rag-pipeline-stream")(_stream_chat)
 
 app = FastAPI(title="NovaMart Support Chatbot", version="0.1.0")
 

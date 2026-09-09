@@ -4,3 +4,4 @@ boto3==1.43.86
 python-dotenv==1.0.0
 pydantic==2.13.4
 anthropic>=0.30.0
+langsmith>=0.1.140
