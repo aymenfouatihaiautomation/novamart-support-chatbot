@@ -10,6 +10,7 @@ limite aux 10 derniers echanges pour rester sous le context window.
 
 from __future__ import annotations
 
+import time
 from typing import Generator
 
 import config
@@ -42,6 +43,14 @@ CONVERSATION_HISTORY: dict[str, list[dict[str, str]]] = {}
 
 # 10 echanges = 20 messages (user + assistant).
 MAX_HISTORY_MESSAGES = 20
+
+# Analytics basique (en memoire process).
+ANALYTICS: dict = {
+    "total_conversations": 0,
+    "total_messages": 0,
+    "questions": [],  # 100 dernieres questions
+    "response_times": [],  # 100 derniers temps de reponse (secondes)
+}
 
 
 def _trim_history(history: list[dict[str, str]]) -> None:
@@ -107,7 +116,15 @@ def chat(message: str, session_id: str) -> str:
     if not config.aws_credentials_configured():
         return MOCK_RESPONSE
 
+    start = time.time()
     history = CONVERSATION_HISTORY.setdefault(session_id, [])
+
+    ANALYTICS["total_messages"] += 1
+    if not history:  # historique vide avant ajout -> premier message de la session
+        ANALYTICS["total_conversations"] += 1
+    ANALYTICS["questions"].append(message)
+    del ANALYTICS["questions"][:-100]
+
     history.append({"role": "user", "content": message})
 
     try:
@@ -126,6 +143,10 @@ def chat(message: str, session_id: str) -> str:
         if history and history[-1]["role"] == "user":
             history.pop()  # ne pas laisser un tour utilisateur orphelin
         return f"Je suis NovaMart Support. Une erreur est survenue : {exc}"
+
+    finally:
+        ANALYTICS["response_times"].append(round(time.time() - start, 3))
+        del ANALYTICS["response_times"][:-100]
 
 
 def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:

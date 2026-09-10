@@ -65,6 +65,26 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/stats")
+def get_stats():
+    from chat import ANALYTICS
+    questions = ANALYTICS["questions"]
+    times = ANALYTICS["response_times"]
+
+    # Top 5 questions les plus fréquentes
+    from collections import Counter
+    top_questions = Counter(questions).most_common(5)
+
+    avg_time = sum(times) / len(times) if times else 0
+
+    return {
+        "total_conversations": ANALYTICS["total_conversations"],
+        "total_messages": ANALYTICS["total_messages"],
+        "avg_response_time_seconds": round(avg_time, 2),
+        "top_questions": [{"question": q, "count": c} for q, c in top_questions],
+    }
+
+
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit("20/minute")
 def chat_endpoint(request: Request, payload: ChatRequest) -> ChatResponse:
