@@ -20,10 +20,13 @@ load_dotenv()
 
 from langsmith import traceable
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from chat import chat as _chat, stream_chat as _stream_chat
 
@@ -32,6 +35,11 @@ chat = traceable(name="novamart-rag-pipeline")(_chat)
 stream_chat = traceable(name="novamart-rag-pipeline-stream")(_stream_chat)
 
 app = FastAPI(title="NovaMart Support Chatbot", version="0.1.0")
+
+# Rate limiting : 20 requetes / minute / IP sur les endpoints chat.
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,14 +66,16 @@ def health() -> dict:
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat_endpoint(payload: ChatRequest) -> ChatResponse:
+@limiter.limit("20/minute")
+def chat_endpoint(request: Request, payload: ChatRequest) -> ChatResponse:
     session_id = payload.session_id or str(uuid.uuid4())
     answer = chat(payload.message, session_id)
     return ChatResponse(response=answer, session_id=session_id)
 
 
 @app.post("/chat/stream")
-def chat_stream_endpoint(payload: ChatRequest) -> StreamingResponse:
+@limiter.limit("20/minute")
+async def chat_stream_endpoint(request: Request, payload: ChatRequest) -> StreamingResponse:
     session_id = payload.session_id or str(uuid.uuid4())
 
     def event_stream():
