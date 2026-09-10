@@ -155,6 +155,10 @@
 
   /* --------------------------------------------------------------- submit */
 
+  var RETRY_STYLE =
+    "display:block;margin-top:8px;padding:6px 12px;border:1px solid #D1D5DB;" +
+    "border-radius:8px;background:#fff;color:#374151;font:inherit;cursor:pointer";
+
   function submit(raw) {
     var text = (raw || "").trim();
     if (!text) return;
@@ -167,15 +171,35 @@
     var started = false;
     var answer = "";
 
+    // Timeout de 30 s : au-dela, on abandonne le fetch.
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
+
     function render() {
       bubble.innerHTML = marked.parse(answer || "…");
+      scrollDown();
+    }
+
+    function fail(message) {
+      clearTimeout(timeoutId);
+      bubble.classList.remove("nm-bubble-typing");
+      bubble.textContent = message;
+
+      var retry = h("button", { class: "nm-retry", style: RETRY_STYLE, text: "🔄 Réessayer" });
+      retry.addEventListener("click", function () {
+        var row = bubble.parentNode;               // supprime le message d'erreur
+        if (row && row.parentNode) row.parentNode.removeChild(row);
+        submit(text);                              // relance avec le meme message
+      });
+      bubble.appendChild(retry);
       scrollDown();
     }
 
     fetch(API_BASE + "/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, session_id: sessionId })
+      body: JSON.stringify({ message: text, session_id: sessionId }),
+      signal: controller.signal
     })
       .then(function (response) {
         if (!response.ok || !response.body) throw new Error("stream unavailable");
@@ -187,6 +211,7 @@
         function pump() {
           return reader.read().then(function (result) {
             if (result.done) {
+              clearTimeout(timeoutId);
               bubble.classList.remove("nm-bubble-typing");
               render();
               return;
@@ -218,9 +243,12 @@
 
         return pump();
       })
-      .catch(function () {
-        bubble.classList.remove("nm-bubble-typing");
-        bubble.textContent = "Erreur de connexion au serveur. Réessayez.";
+      .catch(function (err) {
+        if (err && err.name === "AbortError") {
+          fail("⏱️ La réponse prend trop de temps. Veuillez réessayer.");
+        } else {
+          fail("❌ Une erreur est survenue. Veuillez réessayer.");
+        }
       });
   }
 
