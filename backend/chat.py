@@ -4,14 +4,19 @@ Approche en deux etapes :
   1. retrieve() (AWS Bedrock) -> recupere les passages de la Knowledge Base.
   2. Anthropic Messages API   -> genere une reponse a partir du contexte + historique.
 
-L'historique par session est garde en memoire process (CONVERSATION_HISTORY),
-limite aux 10 derniers echanges pour rester sous le context window.
+L'historique par session est persiste dans Redis (Upstash), avec un fallback
+en memoire process si Redis est indisponible. Limite aux 10 derniers echanges
+pour rester sous le context window.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import time
 from typing import Generator
+
+import redis
 
 import config
 
@@ -38,11 +43,50 @@ SYSTEM_PROMPT = (
     "Tu parles français uniquement."
 )
 
-# Memoire conversationnelle : session_id -> [{"role": str, "content": str}, ...]
-CONVERSATION_HISTORY: dict[str, list[dict[str, str]]] = {}
-
 # 10 echanges = 20 messages (user + assistant).
 MAX_HISTORY_MESSAGES = 20
+
+# --- Memoire conversationnelle : Redis (Upstash) + fallback en memoire ---
+REDIS_URL = os.getenv("REDIS_URL")
+redis_client = None
+
+
+def get_redis():
+    global redis_client
+    if redis_client is None and REDIS_URL:
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    return redis_client
+
+
+# Fallback si Redis non disponible : session_id -> [{"role", "content"}, ...]
+CONVERSATION_HISTORY: dict[str, list[dict[str, str]]] = {}
+
+
+def get_history(session_id: str) -> list[dict]:
+    r = get_redis()
+    if r:
+        try:
+            data = r.get(f"chat:{session_id}")
+            return json.loads(data) if data else []
+        except Exception:
+            pass
+    return CONVERSATION_HISTORY.get(session_id, [])
+
+
+def save_history(session_id: str, history: list[dict]) -> None:
+    # Garde max 20 messages
+    if len(history) > MAX_HISTORY_MESSAGES:
+        history = history[-MAX_HISTORY_MESSAGES:]
+    r = get_redis()
+    if r:
+        try:
+            # Expire apres 24 heures
+            r.setex(f"chat:{session_id}", 86400, json.dumps(history))
+            return
+        except Exception:
+            pass
+    CONVERSATION_HISTORY[session_id] = history
+
 
 # Analytics basique (en memoire process).
 ANALYTICS: dict = {
@@ -51,12 +95,6 @@ ANALYTICS: dict = {
     "questions": [],  # 100 dernieres questions
     "response_times": [],  # 100 derniers temps de reponse (secondes)
 }
-
-
-def _trim_history(history: list[dict[str, str]]) -> None:
-    """Ne garde que les MAX_HISTORY_MESSAGES derniers messages (in place)."""
-    if len(history) > MAX_HISTORY_MESSAGES:
-        del history[:-MAX_HISTORY_MESSAGES]
 
 
 def _agent_runtime_client():
@@ -117,7 +155,7 @@ def chat(message: str, session_id: str) -> str:
         return MOCK_RESPONSE
 
     start = time.time()
-    history = CONVERSATION_HISTORY.setdefault(session_id, [])
+    history = get_history(session_id)
 
     ANALYTICS["total_messages"] += 1
     if not history:  # historique vide avant ajout -> premier message de la session
@@ -136,12 +174,11 @@ def chat(message: str, session_id: str) -> str:
             answer = _generate(message, passages, history[:-1])
 
         history.append({"role": "assistant", "content": answer})
-        _trim_history(history)
+        save_history(session_id, history)
         return answer
 
     except Exception as exc:  # pragma: no cover - depend de l'environnement AWS
-        if history and history[-1]["role"] == "user":
-            history.pop()  # ne pas laisser un tour utilisateur orphelin
+        # Rien n'a ete persiste (pas d'appel a save_history) -> pas de tour orphelin.
         return f"Je suis NovaMart Support. Une erreur est survenue : {exc}"
 
     finally:
@@ -156,13 +193,13 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
     """
     import anthropic
 
-    history = CONVERSATION_HISTORY.setdefault(session_id, [])
+    history = get_history(session_id)
 
     passages = _retrieve(message)
     if not passages:
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": NO_CONTEXT_RESPONSE})
-        _trim_history(history)
+        save_history(session_id, history)
         yield NO_CONTEXT_RESPONSE
         return
 
@@ -183,4 +220,4 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
 
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": full})
-    _trim_history(history)
+    save_history(session_id, history)

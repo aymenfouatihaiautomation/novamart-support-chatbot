@@ -6,3 +6,4 @@ pydantic==2.13.4
 anthropic>=0.30.0
 langsmith>=0.1.140
 slowapi==0.1.9
+redis==5.0.1
