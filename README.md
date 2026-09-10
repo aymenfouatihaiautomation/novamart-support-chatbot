@@ -12,9 +12,10 @@ Production-ready AI customer support chatbot powered by AWS Bedrock Knowledge Ba
 
 ## Live Demo
 
+![NovaMart AI Chatbot Demo](docs/demo.gif)
+
 - **API health check:** https://web-production-fb44b.up.railway.app/health
-- **Try the widget:** open `frontend/index.html` in a browser — the chat bubble appears
-  bottom-right and talks to the production API.
+- **Try it live:** https://aymenfouatihaiautomation.github.io/novamart-support-chatbot/
 
 ---
 
