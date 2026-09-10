@@ -158,6 +158,49 @@ novamart-support-chatbot/
 
 ---
 
+## 🔧 Adapter ce chatbot à votre business
+
+Ce chatbot est conçu pour être déployé sur n'importe quel e-commerce
+en moins de 48 heures. Voici comment :
+
+### 1. Préparez vos documents (1-2 heures)
+Remplacez les fichiers dans `documents/` par vos propres documents :
+- `faq.txt` — Vos questions fréquentes
+- `politique-retours.txt` — Votre politique de retours
+- `catalogue-produits.txt` — Votre catalogue produits
+- `guide-livraison.txt` — Vos délais et zones de livraison
+
+Formats supportés : `.txt`, `.pdf`, `.docx`
+
+### 2. Uploadez vers AWS S3 (5 minutes)
+```bash
+python scripts/upload_to_s3.py --bucket votre-bucket --prefix votre-marque/
+```
+
+### 3. Synchronisez la Knowledge Base (2 minutes)
+Dans la console AWS Bedrock → votre Knowledge Base → "Sync"
+
+### 4. Déployez (10 minutes)
+Configurez les variables d'environnement sur Railway/Render
+et déployez depuis GitHub.
+
+### 5. Intégrez le widget (2 minutes)
+Ajoutez ces 2 lignes à n'importe quelle page web :
+```html
+<script>window.NOVAMART_CHAT_API = "https://votre-api.railway.app";</script>
+<script src="https://votre-domaine/widget.js"></script>
+```
+
+### Cas d'usage testés
+| Secteur | Documents | Résultat |
+|---------|-----------|---------|
+| E-commerce | FAQ + Catalogue + Livraison | ✅ Déployé (NovaMart demo) |
+| SaaS | Documentation + Guide utilisateur | ✅ Compatible |
+| Immobilier | Fiches biens + Conditions | ✅ Compatible |
+| Restaurant | Menu + Allergènes + Horaires | ✅ Compatible |
+
+---
+
 ## Author
 
 **Aymen Fouatih** — AI Automation Freelancer
