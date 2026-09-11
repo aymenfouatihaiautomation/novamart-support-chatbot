@@ -11,6 +11,7 @@ pour rester sous le context window.
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import time
@@ -94,6 +95,8 @@ ANALYTICS: dict = {
     "total_messages": 0,
     "questions": [],  # 100 dernieres questions
     "response_times": [],  # 100 derniers temps de reponse (secondes)
+    "hourly_conversations": {},  # {"2026-09-10 14": 5, ...}
+    "start_time": None,  # timestamp du demarrage du serveur
 }
 
 
@@ -157,9 +160,16 @@ def chat(message: str, session_id: str) -> str:
     start = time.time()
     history = get_history(session_id)
 
+    if ANALYTICS["start_time"] is None:
+        ANALYTICS["start_time"] = datetime.datetime.now().isoformat()
+
     ANALYTICS["total_messages"] += 1
     if not history:  # historique vide avant ajout -> premier message de la session
         ANALYTICS["total_conversations"] += 1
+        hour_key = datetime.datetime.now().strftime("%Y-%m-%d %H")
+        ANALYTICS["hourly_conversations"][hour_key] = (
+            ANALYTICS["hourly_conversations"].get(hour_key, 0) + 1
+        )
     ANALYTICS["questions"].append(message)
     del ANALYTICS["questions"][:-100]
 

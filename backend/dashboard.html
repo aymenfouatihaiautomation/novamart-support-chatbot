@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaMart — Dashboard Support</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+}
+.header {
+    background: #2563EB;
+    color: white;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header .subtitle { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+.status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.card .label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.card .value {
+    font-size: 36px;
+    font-weight: 800;
+    color: #2563EB;
+}
+.card .sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+.charts {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.chart-card h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #374151;
+}
+.questions-list { list-style: none; }
+.questions-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+}
+.questions-list li:last-child { border-bottom: none; }
+.questions-list .q-text {
+    color: #374151;
+    flex: 1;
+    margin-right: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+.questions-list .q-count {
+    background: #EFF6FF;
+    color: #2563EB;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.refresh-btn {
+    display: block;
+    margin: 0 auto 32px;
+    padding: 10px 24px;
+    background: #2563EB;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.refresh-btn:hover { background: #1D4ED8; }
+.empty {
+    text-align: center;
+    color: #9ca3af;
+    padding: 40px;
+    font-size: 14px;
+}
+@media (max-width: 768px) {
+    .charts { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+    <div>
+        <h1>📊 NovaMart Support — Dashboard</h1>
+        <div class="subtitle">Analytics en temps réel</div>
+    </div>
+    <div class="status-badge">
+        <div class="status-dot"></div>
+        <span id="status-text">Chargement...</span>
+    </div>
+</div>
+
+<div class="container">
+    <button class="refresh-btn" onclick="loadStats()">🔄 Actualiser</button>
+
+    <div class="cards">
+        <div class="card">
+            <div class="label">Conversations</div>
+            <div class="value" id="total-conv">—</div>
+            <div class="sub">Sessions uniques</div>
+        </div>
+        <div class="card">
+            <div class="label">Messages</div>
+            <div class="value" id="total-msg">—</div>
+            <div class="sub">Total échanges</div>
+        </div>
+        <div class="card">
+            <div class="label">Temps moyen</div>
+            <div class="value" id="avg-time">—</div>
+            <div class="sub">Secondes par réponse</div>
+        </div>
+        <div class="card">
+            <div class="label">Uptime</div>
+            <div class="value" id="uptime">—</div>
+            <div class="sub">Heures en ligne</div>
+        </div>
+    </div>
+
+    <div class="charts">
+        <div class="chart-card">
+            <h2>📈 Conversations par heure</h2>
+            <canvas id="hourlyChart" height="200"></canvas>
+            <div id="chart-empty" class="empty" style="display:none">
+                Aucune donnée disponible — posez une question au chatbot d'abord.
+            </div>
+        </div>
+        <div class="chart-card">
+            <h2>❓ Questions fréquentes</h2>
+            <ul class="questions-list" id="top-questions">
+                <li><span class="q-text" style="color:#9ca3af">Chargement...</span></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+let hourlyChart = null;
+
+async function loadStats() {
+    try {
+        const res = await fetch('/stats');
+        const data = await res.json();
+
+        document.getElementById('total-conv').textContent = data.total_conversations;
+        document.getElementById('total-msg').textContent = data.total_messages;
+        document.getElementById('avg-time').textContent = data.avg_response_time_seconds + 's';
+        document.getElementById('uptime').textContent = data.uptime_hours + 'h';
+        document.getElementById('status-text').textContent = 'Système opérationnel';
+
+        // Graphique hourly
+        const hourly = data.hourly_conversations || {};
+        const labels = Object.keys(hourly).sort();
+        const values = labels.map(k => hourly[k]);
+
+        if (labels.length === 0) {
+            document.getElementById('chart-empty').style.display = 'block';
+            if (document.getElementById('hourlyChart'))
+                document.getElementById('hourlyChart').style.display = 'none';
+        } else {
+            document.getElementById('chart-empty').style.display = 'none';
+            document.getElementById('hourlyChart').style.display = 'block';
+
+            if (hourlyChart) hourlyChart.destroy();
+            hourlyChart = new Chart(
+                document.getElementById('hourlyChart'),
+                {
+                    type: 'bar',
+                    data: {
+                        labels: labels.map(l => l.split(' ')[1] + 'h'),
+                        datasets: [{
+                            label: 'Conversations',
+                            data: values,
+                            backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                            borderColor: '#2563EB',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                grid: { color: '#f3f4f6' }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                }
+            );
+        }
+
+        // Top questions
+        const ql = document.getElementById('top-questions');
+        if (!data.top_questions || data.top_questions.length === 0) {
+            ql.innerHTML = '<li><span class="q-text" style="color:#9ca3af">Aucune question enregistrée</span></li>';
+        } else {
+            ql.innerHTML = data.top_questions.map(q =>
+                '<li><span class="q-text">' + q.question + '</span>' +
+                '<span class="q-count">' + q.count + 'x</span></li>'
+            ).join('');
+        }
+
+    } catch(e) {
+        document.getElementById('status-text').textContent = 'Erreur de connexion';
+    }
+}
+
+loadStats();
+setInterval(loadStats, 30000); // refresh toutes les 30s
+</script>
+</body>
+</html>

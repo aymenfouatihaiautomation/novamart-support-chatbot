@@ -22,7 +22,7 @@ from langsmith import traceable
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -68,21 +68,33 @@ def health() -> dict:
 @app.get("/stats")
 def get_stats():
     from chat import ANALYTICS
+    import datetime
     questions = ANALYTICS["questions"]
     times = ANALYTICS["response_times"]
-
-    # Top 5 questions les plus fréquentes
     from collections import Counter
     top_questions = Counter(questions).most_common(5)
-
-    avg_time = sum(times) / len(times) if times else 0
+    avg_time = round(sum(times) / len(times), 2) if times else 0
 
     return {
         "total_conversations": ANALYTICS["total_conversations"],
         "total_messages": ANALYTICS["total_messages"],
-        "avg_response_time_seconds": round(avg_time, 2),
+        "avg_response_time_seconds": avg_time,
         "top_questions": [{"question": q, "count": c} for q, c in top_questions],
+        "hourly_conversations": ANALYTICS["hourly_conversations"],
+        "start_time": ANALYTICS["start_time"],
+        "uptime_hours": round(
+            (datetime.datetime.now() - datetime.datetime.fromisoformat(
+                ANALYTICS["start_time"]
+            )).total_seconds() / 3600, 1
+        ) if ANALYTICS["start_time"] else 0,
     }
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard():
+    html_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 @app.post("/chat", response_model=ChatResponse)
