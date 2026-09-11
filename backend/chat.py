@@ -119,12 +119,30 @@ def _set_refusal_count(session_id: str, count: int) -> None:
     REFUSAL_COUNTS[session_id] = count
 
 
+REFUSAL_PHRASES = [
+    "je ne sais pas",
+    "je n'ai pas trouvé",
+    "pas dans notre documentation",
+    "ne peut pas vous aider",
+    "ne suis pas en mesure",
+    "hors de ma compétence",
+    "uniquement l'assistant de novamart",
+    "je suis uniquement",
+    "[no_context]",
+]
+
+
+def _is_refusal(response: str) -> bool:
+    response_lower = response.lower()
+    return any(phrase in response_lower for phrase in REFUSAL_PHRASES)
+
+
 def _track_refusal(session_id: str, answer: str) -> str:
-    """Detecte les reponses [NO_CONTEXT] consecutives et ajoute [HANDOFF]
-    une fois le seuil atteint. Remet le compteur a 0 des qu'une reponse
-    normale est generee.
+    """Detecte les refus consecutifs (marqueur [NO_CONTEXT] ou tournures de
+    refus generees par le LLM) et ajoute [HANDOFF] une fois le seuil atteint.
+    Remet le compteur a 0 des qu'une reponse normale est generee.
     """
-    if "[NO_CONTEXT]" in answer:
+    if _is_refusal(answer):
         count = _get_refusal_count(session_id) + 1
         _set_refusal_count(session_id, count)
         if count >= HANDOFF_THRESHOLD:
