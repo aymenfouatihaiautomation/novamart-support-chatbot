@@ -27,6 +27,11 @@ BEDROCK_GENERATION_MODEL_ID = os.getenv(
 # Cle API Anthropic — utilisee pour l'etape de generation (hors Bedrock).
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
+# SMTP (Gmail) — utilise par /contact pour le handoff vers un agent humain.
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
+
 
 def _is_real_value(value: str | None) -> bool:
     """True si la valeur existe, n'est pas vide et n'est pas un placeholder 'your_...'."""

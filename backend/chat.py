@@ -23,8 +23,12 @@ import config
 
 MOCK_RESPONSE = "Je suis NovaMart Support. [MOCK - AWS not configured]"
 NO_CONTEXT_RESPONSE = (
-    "Je n'ai pas trouve d'information sur ce sujet dans notre documentation."
+    "Je n'ai pas trouvé d'information sur ce sujet dans notre documentation. [NO_CONTEXT]"
 )
+
+# Nombre de refus [NO_CONTEXT] consecutifs (meme session) avant de proposer
+# le handoff vers un agent humain.
+HANDOFF_THRESHOLD = 2
 
 GENERATION_MODEL = "claude-sonnet-4-6"
 
@@ -87,6 +91,47 @@ def save_history(session_id: str, history: list[dict]) -> None:
         except Exception:
             pass
     CONVERSATION_HISTORY[session_id] = history
+
+
+# --- Compteur de refus consecutifs -> handoff vers agent humain ---
+REFUSAL_COUNTS: dict[str, int] = {}  # fallback en memoire : session_id -> compteur
+
+
+def _get_refusal_count(session_id: str) -> int:
+    r = get_redis()
+    if r:
+        try:
+            val = r.get(f"refusals:{session_id}")
+            return int(val) if val else 0
+        except Exception:
+            pass
+    return REFUSAL_COUNTS.get(session_id, 0)
+
+
+def _set_refusal_count(session_id: str, count: int) -> None:
+    r = get_redis()
+    if r:
+        try:
+            r.setex(f"refusals:{session_id}", 86400, str(count))
+            return
+        except Exception:
+            pass
+    REFUSAL_COUNTS[session_id] = count
+
+
+def _track_refusal(session_id: str, answer: str) -> str:
+    """Detecte les reponses [NO_CONTEXT] consecutives et ajoute [HANDOFF]
+    une fois le seuil atteint. Remet le compteur a 0 des qu'une reponse
+    normale est generee.
+    """
+    if "[NO_CONTEXT]" in answer:
+        count = _get_refusal_count(session_id) + 1
+        _set_refusal_count(session_id, count)
+        if count >= HANDOFF_THRESHOLD:
+            answer = f"{answer} [HANDOFF]"
+    else:
+        _set_refusal_count(session_id, 0)
+    return answer
 
 
 # Analytics basique (en memoire process).
@@ -183,6 +228,8 @@ def chat(message: str, session_id: str) -> str:
             # history[:-1] = echanges precedents (sans le message qu'on vient d'ajouter).
             answer = _generate(message, passages, history[:-1])
 
+        answer = _track_refusal(session_id, answer)
+
         history.append({"role": "assistant", "content": answer})
         save_history(session_id, history)
         return answer
@@ -207,10 +254,11 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
 
     passages = _retrieve(message)
     if not passages:
+        answer = _track_refusal(session_id, NO_CONTEXT_RESPONSE)
         history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": NO_CONTEXT_RESPONSE})
+        history.append({"role": "assistant", "content": answer})
         save_history(session_id, history)
-        yield NO_CONTEXT_RESPONSE
+        yield answer
         return
 
     # history ne contient pas encore le tour actuel -> on le passe tel quel.
@@ -227,6 +275,8 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
         for text in stream.text_stream:
             full += text
             yield text
+
+    _track_refusal(session_id, full)  # reponse normale -> remet le compteur a 0
 
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": full})

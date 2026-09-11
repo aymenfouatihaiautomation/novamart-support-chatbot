@@ -3,7 +3,8 @@
  * Config : window.NOVAMART_CHAT_API = "https://...";
  *
  * Features : SSE streaming (/chat/stream), Markdown rendering (marked.js),
- * session_id, suggested-question chips, typing indicator, bot avatars.
+ * session_id, suggested-question chips, typing indicator, bot avatars,
+ * error retry, human agent handoff (POST /contact) after 2 unanswered questions.
  * Widget starts CLOSED ; chips appear on the first FAB click.
  */
 (function () {
@@ -153,6 +154,60 @@
     if (chips) chips.remove();
   }
 
+  /* -------------------------------------------------------------- handoff */
+
+  function stripMarkers(text) {
+    return text.replace("[HANDOFF]", "").replace("[NO_CONTEXT]", "").trim();
+  }
+
+  function showHandoffForm() {
+    // Un seul formulaire actif a la fois (evite les doublons d'id).
+    var existing = document.querySelector(".nm-handoff");
+    if (existing) existing.remove();
+
+    var wrap = h("div", { class: "nm-handoff" });
+    wrap.innerHTML =
+      "<p>Voulez-vous contacter un agent humain ?</p>" +
+      '<input type="text" placeholder="Votre nom" id="nm-contact-name">' +
+      '<input type="email" placeholder="Votre email" id="nm-contact-email">' +
+      '<button onclick="sendContact()">Envoyer au support</button>';
+
+    els.messages.appendChild(wrap);
+    scrollDown();
+  }
+
+  // Expose globalement : le bouton du formulaire l'appelle via onclick="sendContact()".
+  window.sendContact = function () {
+    var wrap = document.querySelector(".nm-handoff");
+    var nameInput = document.getElementById("nm-contact-name");
+    var emailInput = document.getElementById("nm-contact-email");
+    var name = nameInput ? nameInput.value.trim() : "";
+    var email = emailInput ? emailInput.value.trim() : "";
+
+    if (!name || !email) return;
+
+    fetch(API_BASE + "/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        message: "Demande de contact depuis le chatbot NovaMart (question sans reponse trouvee).",
+        session_id: sessionId
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!wrap) return;
+        wrap.innerHTML = data.success
+          ? "<p>✅ Message envoyé ! Un agent vous contactera sous 24h.</p>"
+          : "<p>❌ Une erreur est survenue, réessayez plus tard.</p>";
+      })
+      .catch(function () {
+        if (wrap) wrap.innerHTML = "<p>❌ Une erreur est survenue, réessayez plus tard.</p>";
+      });
+  };
+
   /* --------------------------------------------------------------- submit */
 
   var RETRY_STYLE =
@@ -176,7 +231,7 @@
     var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
     function render() {
-      bubble.innerHTML = marked.parse(answer || "…");
+      bubble.innerHTML = marked.parse(stripMarkers(answer) || "…");
       scrollDown();
     }
 
@@ -214,6 +269,7 @@
               clearTimeout(timeoutId);
               bubble.classList.remove("nm-bubble-typing");
               render();
+              if (answer.indexOf("[HANDOFF]") !== -1) showHandoffForm();
               return;
             }
 

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import smtplib
 import uuid
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Railway lance `uvicorn backend.main:app` : on ajoute backend/ au sys.path pour
 # que `from chat import ...` resolve, que le module soit importe comme
@@ -28,6 +31,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+import config
 from chat import chat as _chat, stream_chat as _stream_chat
 
 # Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
@@ -58,6 +62,13 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+
+
+class ContactRequest(BaseModel):
+    name: str
+    email: str
+    message: str
+    session_id: str = ""
 
 
 @app.get("/health")
@@ -95,6 +106,45 @@ def dashboard():
     html_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
     with open(html_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+@app.post("/contact")
+def contact_agent(payload: ContactRequest):
+    smtp_email = config.SMTP_EMAIL
+    smtp_password = config.SMTP_PASSWORD
+    support_email = config.SUPPORT_EMAIL
+
+    if not all([smtp_email, smtp_password, support_email]):
+        return {"success": False, "error": "Email not configured"}
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = smtp_email
+        msg["To"] = support_email
+        msg["Subject"] = f"[NovaMart Support] Demande de {payload.name}"
+
+        body = f"""
+Nouvelle demande de contact via le chatbot NovaMart.
+
+Nom : {payload.name}
+Email : {payload.email}
+Session ID : {payload.session_id}
+
+Message :
+{payload.message}
+
+---
+Envoyé automatiquement par le chatbot NovaMart Support.
+        """
+        msg.attach(MIMEText(body, "plain"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(smtp_email, smtp_password)
+            server.sendmail(smtp_email, support_email, msg.as_string())
+
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @app.post("/chat", response_model=ChatResponse)
