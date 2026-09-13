@@ -184,6 +184,9 @@ async def chat_stream_endpoint(request: Request, payload: ChatRequest) -> Stream
     session_id = payload.session_id or str(uuid.uuid4())
 
     def event_stream():
+        # Premier evenement : session_id (pour que le client persiste la memoire).
+        yield f"data: {json.dumps({'session_id': session_id})}\n\n"
+        # Ensuite les chunks de texte normaux.
         for chunk in stream_chat(payload.message, session_id):
             yield f"data: {json.dumps(chunk)}\n\n"
 

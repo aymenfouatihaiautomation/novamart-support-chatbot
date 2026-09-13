@@ -250,6 +250,8 @@
       scrollDown();
     }
 
+    console.log("session_id utilisé:", sessionId);
+
     fetch(API_BASE + "/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -281,15 +283,23 @@
 
             events.forEach(function (evt) {
               if (evt.indexOf("data:") !== 0) return;
-              var chunk;
-              try { chunk = JSON.parse(evt.slice(5)); } catch (e) { return; }
+              var parsed;
+              try { parsed = JSON.parse(evt.slice(5)); } catch (e) { return; }
 
+              // Premier evenement : {"session_id": "..."} -> memorise, n'affiche rien.
+              if (parsed && typeof parsed === "object" && parsed.session_id) {
+                sessionId = parsed.session_id;
+                console.log("session_id reçu:", sessionId);
+                return;
+              }
+
+              // Sinon, c'est un chunk de texte normal.
               if (!started) {
                 started = true;
                 bubble.classList.remove("nm-bubble-typing");
                 bubble.innerHTML = "";
               }
-              answer += chunk;
+              answer += parsed;
             });
 
             if (started) render();
