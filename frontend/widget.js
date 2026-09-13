@@ -186,24 +186,33 @@
 
     if (!name || !email) return;
 
-    fetch(API_BASE + "/contact", {
+    var url = API_BASE + "/contact";
+    var payload = {
+      name: name,
+      email: email,
+      message: "Demande de contact depuis le chatbot NovaMart (question sans reponse trouvee).",
+      session_id: sessionId
+    };
+    console.log("[sendContact] POST", url, payload);
+
+    fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: name,
-        email: email,
-        message: "Demande de contact depuis le chatbot NovaMart (question sans reponse trouvee).",
-        session_id: sessionId
-      })
+      body: JSON.stringify(payload)
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        console.log("[sendContact] HTTP status:", r.status);
+        return r.json();
+      })
       .then(function (data) {
+        console.log("[sendContact] réponse:", data);
         if (!wrap) return;
         wrap.innerHTML = data.success
           ? "<p>✅ Message envoyé ! Un agent vous contactera sous 24h.</p>"
           : "<p>❌ Une erreur est survenue, réessayez plus tard.</p>";
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.log("[sendContact] erreur:", err);
         if (wrap) wrap.innerHTML = "<p>❌ Une erreur est survenue, réessayez plus tard.</p>";
       });
   };
