@@ -338,7 +338,12 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
             full += text
             yield text
 
-    _track_refusal(session_id, full)  # reponse normale -> remet le compteur a 0
+    tracked = _track_refusal(session_id, full)
+    if tracked != full:
+        # _track_refusal a ajoute un marqueur (ex. " [HANDOFF]") apres coup :
+        # on l'envoie comme dernier chunk pour que le frontend le detecte.
+        yield tracked[len(full):]
+        full = tracked
 
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": full})
