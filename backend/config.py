@@ -27,6 +27,9 @@ BEDROCK_GENERATION_MODEL_ID = os.getenv(
 # Cle API Anthropic — utilisee pour l'etape de generation (hors Bedrock).
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
+# Cle API Groq — utilisee pour l'etape de generation (Llama 3.3 70B, inference gratuite).
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 # SMTP (Gmail) — utilise par /contact pour le handoff vers un agent humain.
 SMTP_EMAIL = os.getenv("SMTP_EMAIL")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")

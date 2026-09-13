@@ -2,7 +2,7 @@
 
 Approche en deux etapes :
   1. retrieve() (AWS Bedrock) -> recupere les passages de la Knowledge Base.
-  2. Anthropic Messages API   -> genere une reponse a partir du contexte + historique.
+  2. Groq (Llama 3.3 70B)     -> genere une reponse a partir du contexte + historique.
 
 L'historique par session est persiste dans Redis (Upstash), avec un fallback
 en memoire process si Redis est indisponible. Limite aux 10 derniers echanges
@@ -30,7 +30,9 @@ NO_CONTEXT_RESPONSE = (
 # le handoff vers un agent humain.
 HANDOFF_THRESHOLD = 2
 
-GENERATION_MODEL = "claude-sonnet-4-6"
+# "llama-3.3-70b-versatile" n'existe plus dans le catalogue Groq (modele retire,
+# 404 model_not_found). Remplace par le plus proche disponible sur ce compte.
+GENERATION_MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = (
     "Tu es l'assistant support de NovaMart, une boutique "
@@ -204,22 +206,24 @@ def _build_messages(message: str, passages: list[str], history: list[dict[str, s
 
 
 def _generate(message: str, passages: list[str], history: list[dict[str, str]]) -> str:
-    """Etape 2 — genere une reponse a partir du contexte + historique via l'API Anthropic."""
-    import anthropic
+    """Etape 2 — genere une reponse a partir du contexte + historique via l'API Groq."""
+    from groq import Groq
 
-    client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
-    response = client.messages.create(
+    client = Groq(api_key=config.GROQ_API_KEY)
+    response = client.chat.completions.create(
         model=GENERATION_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+        ] + _build_messages(message, passages, history),
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=_build_messages(message, passages, history),
+        temperature=0.7,
     )
 
-    return response.content[0].text
+    return response.choices[0].message.content
 
 
 def chat(message: str, session_id: str) -> str:
-    """Repond a `message` via retrieve() (AWS) puis l'API Anthropic, avec memoire.
+    """Repond a `message` via retrieve() (AWS) puis l'API Groq, avec memoire.
 
     Si les credentials AWS ou l'ID de Knowledge Base ne sont pas configures,
     retourne une reponse mockee pour permettre le developpement local.
@@ -273,7 +277,7 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
 
     Yield le texte de la reponse au fil de l'eau (fragments de tokens).
     """
-    import anthropic
+    from groq import Groq
 
     history = get_history(session_id)
 
@@ -289,15 +293,21 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
     # history ne contient pas encore le tour actuel -> on le passe tel quel.
     messages = _build_messages(message, passages, history)
 
-    client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
-    full = ""
-    with client.messages.stream(
+    client = Groq(api_key=config.GROQ_API_KEY)
+    stream = client.chat.completions.create(
         model=GENERATION_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+        ] + messages,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=messages,
-    ) as stream:
-        for text in stream.text_stream:
+        temperature=0.7,
+        stream=True,
+    )
+
+    full = ""
+    for chunk in stream:
+        text = chunk.choices[0].delta.content or ""
+        if text:
             full += text
             yield text
 
