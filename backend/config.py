@@ -32,6 +32,10 @@ SMTP_EMAIL = os.getenv("SMTP_EMAIL")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
 
+# HTTP Basic Auth pour /dashboard.
+DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
+DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "novamart2026")
+
 
 def _is_real_value(value: str | None) -> bool:
     """True si la valeur existe, n'est pas vide et n'est pas un placeholder 'your_...'."""

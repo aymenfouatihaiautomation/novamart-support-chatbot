@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 import smtplib
 import uuid
 from email.mime.multipart import MIMEMultipart
@@ -23,9 +24,10 @@ load_dotenv()
 
 from langsmith import traceable
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -52,6 +54,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# HTTP Basic Auth pour /dashboard.
+security = HTTPBasic()
+
+
+def verify_dashboard_auth(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(
+        credentials.username.encode("utf8"),
+        (os.getenv("DASHBOARD_USERNAME", "admin")).encode("utf8")
+    )
+    correct_password = secrets.compare_digest(
+        credentials.password.encode("utf8"),
+        (os.getenv("DASHBOARD_PASSWORD", "novamart2026")).encode("utf8")
+    )
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Accès non autorisé",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
 
 
 class ChatRequest(BaseModel):
@@ -102,7 +125,7 @@ def get_stats():
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
-def dashboard():
+def dashboard(username: str = Depends(verify_dashboard_auth)):
     html_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
     with open(html_path, "r", encoding="utf-8") as f:
         return f.read()
