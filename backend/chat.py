@@ -198,6 +198,23 @@ def _retrieve(message: str) -> list[str]:
     return passages
 
 
+def _build_retrieval_query(message: str, history: list[dict]) -> str:
+    """Enrichit la requête de recherche avec le contexte récent."""
+    # Si message court (moins de 10 mots) et historique disponible
+    words = message.split()
+    if len(words) <= 6 and len(history) >= 2:
+        # Récupère le dernier message utilisateur comme contexte
+        last_user_msgs = [
+            m["content"] for m in history[-4:]
+            if m["role"] == "user"
+        ]
+        if last_user_msgs:
+            # Combine contexte + question actuelle
+            context = last_user_msgs[-1]
+            return f"{context} {message}"
+    return message
+
+
 def _build_messages(message: str, passages: list[str], history: list[dict[str, str]]) -> list[dict[str, str]]:
     """Assemble les messages envoyes a Claude : historique + tour actuel + contexte RAG."""
     contexte = "\n\n---\n\n".join(passages)
@@ -250,11 +267,13 @@ def chat(message: str, session_id: str) -> str:
     history.append({"role": "user", "content": message})
 
     try:
-        passages = _retrieve(message)
+        # history[:-1] = echanges precedents (sans le message qu'on vient d'ajouter
+        # a la ligne ci-dessus) : evite que la requete s'auto-duplique avec elle-meme.
+        retrieval_query = _build_retrieval_query(message, history[:-1])
+        passages = _retrieve(retrieval_query)
         if not passages:
             answer = NO_CONTEXT_RESPONSE
         else:
-            # history[:-1] = echanges precedents (sans le message qu'on vient d'ajouter).
             answer = _generate(message, passages, history[:-1])
 
         answer = _track_refusal(session_id, answer)
@@ -281,7 +300,9 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
 
     history = get_history(session_id)
 
-    passages = _retrieve(message)
+    # Ici history ne contient pas encore le tour actuel -> pas de decalage a gerer.
+    retrieval_query = _build_retrieval_query(message, history)
+    passages = _retrieve(retrieval_query)
     if not passages:
         answer = _track_refusal(session_id, NO_CONTEXT_RESPONSE)
         history.append({"role": "user", "content": message})
