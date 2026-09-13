@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import json
 import secrets
-import smtplib
 import uuid
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 # Railway lance `uvicorn backend.main:app` : on ajoute backend/ au sys.path pour
 # que `from chat import ...` resolve, que le module soit importe comme
@@ -32,6 +29,8 @@ from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+
+import resend as resend_client
 
 import config
 from chat import chat as _chat, stream_chat as _stream_chat
@@ -133,39 +132,35 @@ def dashboard(username: str = Depends(verify_dashboard_auth)):
 
 @app.post("/contact")
 def contact_agent(payload: ContactRequest):
-    smtp_email = config.SMTP_EMAIL
-    smtp_password = config.SMTP_PASSWORD
+    resend_api_key = config.RESEND_API_KEY
     support_email = config.SUPPORT_EMAIL
 
-    if not all([smtp_email, smtp_password, support_email]):
+    if not all([resend_api_key, support_email]):
         return {"success": False, "error": "Email not configured"}
 
     try:
-        msg = MIMEMultipart()
-        msg["From"] = smtp_email
-        msg["To"] = support_email
-        msg["Subject"] = f"[NovaMart Support] Demande de {payload.name}"
+        resend_client.api_key = resend_api_key
 
-        body = f"""
-Nouvelle demande de contact via le chatbot NovaMart.
+        params = {
+            "from": "NovaMart Support <onboarding@resend.dev>",
+            "to": [support_email],
+            "subject": f"[NovaMart Support] Demande de {payload.name}",
+            "html": f"""
+                <h2>Nouvelle demande de contact via le chatbot NovaMart</h2>
+                <p><strong>Nom :</strong> {payload.name}</p>
+                <p><strong>Email :</strong> {payload.email}</p>
+                <p><strong>Session ID :</strong> {payload.session_id}</p>
+                <hr>
+                <p><strong>Message :</strong></p>
+                <p>{payload.message}</p>
+                <hr>
+                <p><em>Envoyé automatiquement par le chatbot NovaMart Support.</em></p>
+            """
+        }
 
-Nom : {payload.name}
-Email : {payload.email}
-Session ID : {payload.session_id}
+        email = resend_client.Emails.send(params)
+        return {"success": True, "id": email.get("id", "")}
 
-Message :
-{payload.message}
-
----
-Envoyé automatiquement par le chatbot NovaMart Support.
-        """
-        msg.attach(MIMEText(body, "plain"))
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(smtp_email, smtp_password)
-            server.sendmail(smtp_email, support_email, msg.as_string())
-
-        return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
 

@@ -30,10 +30,15 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 # Cle API Groq — utilisee pour l'etape de generation (Llama 3.3 70B, inference gratuite).
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# SMTP (Gmail) — utilise par /contact pour le handoff vers un agent humain.
+# SMTP (Gmail) — plus utilise par /contact (bloque par le reseau sortant Railway),
+# conserve au cas ou. Voir RESEND_API_KEY ci-dessous pour l'envoi actuel.
 SMTP_EMAIL = os.getenv("SMTP_EMAIL")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
+
+# Resend — utilise par /contact pour le handoff vers un agent humain (API HTTPS,
+# fonctionne depuis Railway contrairement au SMTP sortant).
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 # HTTP Basic Auth pour /dashboard.
 DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
