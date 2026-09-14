@@ -167,15 +167,40 @@ def _track_refusal(session_id: str, answer: str) -> str:
     return answer
 
 
-# Analytics basique (en memoire process).
-ANALYTICS: dict = {
-    "total_conversations": 0,
-    "total_messages": 0,
-    "questions": [],  # 100 dernieres questions
-    "response_times": [],  # 100 derniers temps de reponse (secondes)
-    "hourly_conversations": {},  # {"2026-09-10 14": 5, ...}
-    "start_time": None,  # timestamp du demarrage du serveur
-}
+# --- Analytics persistees dans Redis (survivent aux redemarrages) ---
+ANALYTICS_KEY = "novamart:analytics"
+
+
+def get_analytics() -> dict:
+    """Récupère les analytics depuis Redis ou retourne les valeurs par défaut."""
+    r = get_redis()
+    if r:
+        try:
+            data = r.get(ANALYTICS_KEY)
+            if data:
+                return json.loads(data)
+        except Exception:
+            pass
+    # Fallback mémoire locale
+    return {
+        "total_conversations": 0,
+        "total_messages": 0,
+        "questions": [],
+        "response_times": [],
+        "hourly_conversations": {},
+        "start_time": datetime.datetime.now().isoformat()
+    }
+
+
+def save_analytics(analytics: dict) -> None:
+    """Sauvegarde les analytics dans Redis sans expiration."""
+    r = get_redis()
+    if r:
+        try:
+            r.set(ANALYTICS_KEY, json.dumps(analytics))
+            return
+        except Exception:
+            pass
 
 
 def _agent_runtime_client():
@@ -256,19 +281,20 @@ def chat(message: str, session_id: str) -> str:
 
     start = time.time()
     history = get_history(session_id)
+    analytics = get_analytics()
 
-    if ANALYTICS["start_time"] is None:
-        ANALYTICS["start_time"] = datetime.datetime.now().isoformat()
+    if analytics["start_time"] is None:
+        analytics["start_time"] = datetime.datetime.now().isoformat()
 
-    ANALYTICS["total_messages"] += 1
+    analytics["total_messages"] += 1
     if not history:  # historique vide avant ajout -> premier message de la session
-        ANALYTICS["total_conversations"] += 1
+        analytics["total_conversations"] += 1
         hour_key = datetime.datetime.now().strftime("%Y-%m-%d %H")
-        ANALYTICS["hourly_conversations"][hour_key] = (
-            ANALYTICS["hourly_conversations"].get(hour_key, 0) + 1
+        analytics["hourly_conversations"][hour_key] = (
+            analytics["hourly_conversations"].get(hour_key, 0) + 1
         )
-    ANALYTICS["questions"].append(message)
-    del ANALYTICS["questions"][:-100]
+    analytics["questions"].append(message)
+    del analytics["questions"][:-100]
 
     history.append({"role": "user", "content": message})
 
@@ -293,8 +319,9 @@ def chat(message: str, session_id: str) -> str:
         return f"Je suis NovaMart Support. Une erreur est survenue : {exc}"
 
     finally:
-        ANALYTICS["response_times"].append(round(time.time() - start, 3))
-        del ANALYTICS["response_times"][:-100]
+        analytics["response_times"].append(round(time.time() - start, 3))
+        del analytics["response_times"][:-100]
+        save_analytics(analytics)
 
 
 def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:

@@ -100,7 +100,8 @@ def health() -> dict:
 
 @app.get("/stats")
 def get_stats():
-    from chat import ANALYTICS
+    from chat import get_analytics
+    ANALYTICS = get_analytics()
     import datetime
     questions = ANALYTICS["questions"]
     times = ANALYTICS["response_times"]
