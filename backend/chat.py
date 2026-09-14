@@ -293,7 +293,9 @@ def chat(message: str, session_id: str) -> str:
         analytics["hourly_conversations"][hour_key] = (
             analytics["hourly_conversations"].get(hour_key, 0) + 1
         )
-    analytics["questions"].append(message)
+    # Normalise : minuscules + strip espaces
+    normalized = message.strip().lower()
+    analytics["questions"].append(normalized)
     del analytics["questions"][:-100]
 
     history.append({"role": "user", "content": message})
@@ -346,7 +348,9 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
 
     if len(analytics["questions"]) >= 100:
         analytics["questions"] = analytics["questions"][-99:]
-    analytics["questions"].append(message)
+    # Normalise : minuscules + strip espaces
+    normalized = message.strip().lower()
+    analytics["questions"].append(normalized)
 
     start_time_req = time.time()
 
