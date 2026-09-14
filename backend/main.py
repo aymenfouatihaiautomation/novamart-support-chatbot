@@ -33,7 +33,7 @@ from slowapi.util import get_remote_address
 import resend as resend_client
 
 import config
-from chat import chat as _chat, stream_chat as _stream_chat
+from chat import chat as _chat, get_history, stream_chat as _stream_chat
 
 # Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
 chat = traceable(name="novamart-rag-pipeline")(_chat)
@@ -141,20 +141,50 @@ def contact_agent(payload: ContactRequest):
     try:
         resend_client.api_key = resend_api_key
 
+        # Récupère l'historique de la session
+        history = get_history(payload.session_id) if payload.session_id else []
+
+        # Formate l'historique en HTML
+        history_html = ""
+        if history:
+            history_html = "<h3>Historique de la conversation :</h3><table border='1' cellpadding='8' style='border-collapse:collapse;width:100%'>"
+            for msg in history[-10:]:  # derniers 10 messages
+                role = "🧑 Client" if msg["role"] == "user" else "🤖 Bot"
+                color = "#EFF6FF" if msg["role"] == "user" else "#F9FAFB"
+                history_html += f"<tr style='background:{color}'><td style='width:80px;font-weight:bold'>{role}</td><td>{msg['content'][:300]}</td></tr>"
+            history_html += "</table>"
+
         params = {
             "from": "NovaMart Support <onboarding@resend.dev>",
             "to": [support_email],
-            "subject": f"[NovaMart Support] Demande de {payload.name}",
+            "reply_to": payload.email,
+            "subject": f"[NovaMart Support] {payload.name} a besoin d'aide",
             "html": f"""
-                <h2>Nouvelle demande de contact via le chatbot NovaMart</h2>
-                <p><strong>Nom :</strong> {payload.name}</p>
-                <p><strong>Email :</strong> {payload.email}</p>
-                <p><strong>Session ID :</strong> {payload.session_id}</p>
-                <hr>
-                <p><strong>Message :</strong></p>
-                <p>{payload.message}</p>
-                <hr>
-                <p><em>Envoyé automatiquement par le chatbot NovaMart Support.</em></p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                    <h2 style="color: #2563EB;">🆘 Nouveau client à recontacter</h2>
+
+                    <div style="background: #EFF6FF; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                        <h3 style="margin:0 0 8px 0;">Informations du client</h3>
+                        <p style="margin:4px 0"><strong>Nom :</strong> {payload.name}</p>
+                        <p style="margin:4px 0"><strong>Email :</strong> <a href="mailto:{payload.email}">{payload.email}</a></p>
+                        <p style="margin:4px 0"><strong>Session ID :</strong> {payload.session_id}</p>
+                    </div>
+
+                    <div style="background: #FEF3C7; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                        <h3 style="margin:0 0 8px 0;">📧 Pour répondre au client</h3>
+                        <p style="margin:4px 0">Répondez directement à cet email —
+                        la réponse partira à <strong>{payload.email}</strong></p>
+                    </div>
+
+                    {history_html}
+
+                    <hr style="margin: 24px 0;">
+                    <p style="color: #6B7280; font-size: 12px;">
+                        Envoyé automatiquement par le chatbot NovaMart Support.<br>
+                        Dashboard : <a href="https://web-production-fb44b.up.railway.app/dashboard">
+                        Voir les analytics</a>
+                    </p>
+                </div>
             """
         }
 
