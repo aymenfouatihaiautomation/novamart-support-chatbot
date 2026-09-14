@@ -332,6 +332,23 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
     from groq import Groq
 
     history = get_history(session_id)
+    analytics = get_analytics()
+
+    analytics["total_messages"] += 1
+    if len(history) == 0:  # historique vide -> premiere fois qu'on voit cette session
+        analytics["total_conversations"] += 1
+        hour_key = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H")
+        analytics["hourly_conversations"][hour_key] = (
+            analytics["hourly_conversations"].get(hour_key, 0) + 1
+        )
+        if analytics["start_time"] is None:
+            analytics["start_time"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    if len(analytics["questions"]) >= 100:
+        analytics["questions"] = analytics["questions"][-99:]
+    analytics["questions"].append(message)
+
+    start_time_req = time.time()
 
     # Ici history ne contient pas encore le tour actuel -> pas de decalage a gerer.
     retrieval_query = _build_retrieval_query(message, history)
@@ -341,6 +358,13 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": answer})
         save_history(session_id, history)
+
+        response_time = time.time() - start_time_req
+        if len(analytics["response_times"]) >= 100:
+            analytics["response_times"] = analytics["response_times"][-99:]
+        analytics["response_times"].append(round(response_time, 2))
+        save_analytics(analytics)
+
         yield answer
         return
 
@@ -375,3 +399,9 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": full})
     save_history(session_id, history)
+
+    response_time = time.time() - start_time_req
+    if len(analytics["response_times"]) >= 100:
+        analytics["response_times"] = analytics["response_times"][-99:]
+    analytics["response_times"].append(round(response_time, 2))
+    save_analytics(analytics)
