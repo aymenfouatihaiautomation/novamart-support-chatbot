@@ -117,9 +117,9 @@ def get_stats():
         "hourly_conversations": ANALYTICS["hourly_conversations"],
         "start_time": ANALYTICS["start_time"],
         "uptime_hours": round(
-            (datetime.datetime.now() - datetime.datetime.fromisoformat(
-                ANALYTICS["start_time"]
-            )).total_seconds() / 3600, 1
+            (datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(
+                ANALYTICS["start_time"].replace("+00:00", "")
+            ).replace(tzinfo=datetime.timezone.utc)).total_seconds() / 3600, 1
         ) if ANALYTICS["start_time"] else 0,
     }
 

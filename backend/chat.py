@@ -188,7 +188,7 @@ def get_analytics() -> dict:
         "questions": [],
         "response_times": [],
         "hourly_conversations": {},
-        "start_time": datetime.datetime.now().isoformat()
+        "start_time": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
 
 
@@ -284,12 +284,12 @@ def chat(message: str, session_id: str) -> str:
     analytics = get_analytics()
 
     if analytics["start_time"] is None:
-        analytics["start_time"] = datetime.datetime.now().isoformat()
+        analytics["start_time"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     analytics["total_messages"] += 1
     if not history:  # historique vide avant ajout -> premier message de la session
         analytics["total_conversations"] += 1
-        hour_key = datetime.datetime.now().strftime("%Y-%m-%d %H")
+        hour_key = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H")
         analytics["hourly_conversations"][hour_key] = (
             analytics["hourly_conversations"].get(hour_key, 0) + 1
         )
