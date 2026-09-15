@@ -25,7 +25,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -46,12 +46,20 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+ALLOWED_ORIGINS = [
+    "https://aymenfouatihaiautomation.github.io",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # DEV uniquement - a restreindre en production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # HTTP Basic Auth pour /dashboard.
@@ -80,6 +88,18 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str = ""
 
+    @validator("message")
+    def message_must_be_valid(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("Le message ne peut pas être vide")
+        if len(v) > 500:
+            raise ValueError("Le message ne peut pas dépasser 500 caractères")
+        # Retire les caractères de contrôle dangereux
+        import re
+        v = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]', '', v)
+        return v
+
 
 class ChatResponse(BaseModel):
     response: str
@@ -91,6 +111,31 @@ class ContactRequest(BaseModel):
     email: str
     message: str
     session_id: str = ""
+
+    @validator("name")
+    def name_must_be_valid(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("Le nom ne peut pas être vide")
+        if len(v) > 100:
+            raise ValueError("Le nom ne peut pas dépasser 100 caractères")
+        return v
+
+    @validator("email")
+    def email_must_be_valid(cls, v):
+        v = v.strip()
+        if "@" not in v or "." not in v:
+            raise ValueError("Email invalide")
+        return v
+
+    @validator("message")
+    def message_must_be_valid(cls, v):
+        v = v.strip()
+        if not v:
+            raise ValueError("Le message ne peut pas être vide")
+        if len(v) > 1000:
+            raise ValueError("Le message ne peut pas dépasser 1000 caractères")
+        return v
 
 
 @app.get("/health")
