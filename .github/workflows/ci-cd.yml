@@ -58,20 +58,17 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Trigger Railway Deployment
         run: |
-          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach
+          curl --fail -X POST \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "mutation { serviceInstanceRedeploy(environmentId: \"production\", serviceId: \"${{ secrets.RAILWAY_SERVICE_ID }}\") }"
+            }' \
+            https://backboard.railway.app/graphql/v2
 
-      - name: Deployment success notification
+      - name: Deployment success
         run: |
-          echo "✅ Déploiement réussi sur Railway !"
-          echo "🌐 URL: https://web-production-fb44b.up.railway.app"
-          echo "📊 Dashboard: https://web-production-fb44b.up.railway.app/dashboard"
+          echo "✅ Déploiement déclenché sur Railway !"
+          echo "🌐 https://web-production-fb44b.up.railway.app"
