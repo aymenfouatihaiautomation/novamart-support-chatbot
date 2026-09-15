@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import secrets
 import uuid
 
@@ -38,6 +39,25 @@ from chat import chat as _chat, get_history, stream_chat as _stream_chat
 # Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
 chat = traceable(name="novamart-rag-pipeline")(_chat)
 stream_chat = traceable(name="novamart-rag-pipeline-stream")(_stream_chat)
+
+# Configure le logger JSON
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage(),
+        }
+        if hasattr(record, "extra"):
+            log_data.update(record.extra)
+        return json.dumps(log_data, ensure_ascii=False)
+
+
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+logger = logging.getLogger("novamart")
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 app = FastAPI(title="NovaMart Support Chatbot", version="0.1.0")
 
@@ -178,6 +198,14 @@ def dashboard(username: str = Depends(verify_dashboard_auth)):
 
 @app.post("/contact")
 def contact_agent(payload: ContactRequest):
+    logger.info("contact_request", extra={
+        "extra": {
+            "name": payload.name,
+            "session_id": payload.session_id,
+            "endpoint": "/contact"
+        }
+    })
+
     resend_api_key = config.RESEND_API_KEY
     support_email = config.SUPPORT_EMAIL
 
@@ -246,6 +274,15 @@ def contact_agent(payload: ContactRequest):
 def chat_endpoint(request: Request, payload: ChatRequest) -> ChatResponse:
     session_id = payload.session_id or str(uuid.uuid4())
     answer = chat(payload.message, session_id)
+
+    logger.info("chat_request", extra={
+        "extra": {
+            "session_id": payload.session_id,
+            "message_length": len(payload.message),
+            "endpoint": "/chat"
+        }
+    })
+
     return ChatResponse(response=answer, session_id=session_id)
 
 
@@ -253,6 +290,14 @@ def chat_endpoint(request: Request, payload: ChatRequest) -> ChatResponse:
 @limiter.limit("20/minute")
 async def chat_stream_endpoint(request: Request, payload: ChatRequest) -> StreamingResponse:
     session_id = payload.session_id or str(uuid.uuid4())
+
+    logger.info("stream_request", extra={
+        "extra": {
+            "session_id": payload.session_id,
+            "message_length": len(payload.message),
+            "endpoint": "/chat/stream"
+        }
+    })
 
     def event_stream():
         # Premier evenement : session_id (pour que le client persiste la memoire).
