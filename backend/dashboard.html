@@ -143,9 +143,12 @@ body {
         <h1>📊 NovaMart Support — Dashboard</h1>
         <div class="subtitle">Analytics en temps réel</div>
     </div>
-    <div class="status-badge">
-        <div class="status-dot"></div>
-        <span id="status-text">Chargement...</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span id="status-text">Chargement...</span>
+        </div>
+        <button onclick="logout()" style="background:rgba(255,255,255,0.15);color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Déconnexion</button>
     </div>
 </div>
 
@@ -193,11 +196,24 @@ body {
 </div>
 
 <script>
+// Vérifie le JWT avant d'afficher le dashboard
+const token = localStorage.getItem('novamart_token');
+if (!token) {
+    window.location.href = '/auth/login';
+}
+
+function logout() {
+    localStorage.removeItem('novamart_token');
+    window.location.href = '/auth/login';
+}
+
 let hourlyChart = null;
 
 async function loadStats() {
     try {
-        const res = await fetch('/stats');
+        const res = await fetch('/stats', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
 
         document.getElementById('total-conv').textContent = data.total_conversations;

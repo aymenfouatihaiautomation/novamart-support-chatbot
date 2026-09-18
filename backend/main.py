@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import secrets
 import uuid
 
 # Railway lance `uvicorn backend.main:app` : on ajoute backend/ au sys.path pour
@@ -25,7 +24,7 @@ from langsmith import traceable
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -34,6 +33,7 @@ from slowapi.util import get_remote_address
 import resend as resend_client
 
 import config
+from auth import authenticate_user, create_access_token, verify_token
 from chat import chat as _chat, get_history, stream_chat as _stream_chat
 
 # Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
@@ -81,28 +81,6 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization"],
 )
-
-# HTTP Basic Auth pour /dashboard.
-security = HTTPBasic()
-
-
-def verify_dashboard_auth(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(
-        credentials.username.encode("utf8"),
-        (os.getenv("DASHBOARD_USERNAME", "admin")).encode("utf8")
-    )
-    correct_password = secrets.compare_digest(
-        credentials.password.encode("utf8"),
-        (os.getenv("DASHBOARD_PASSWORD", "novamart2026")).encode("utf8")
-    )
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Accès non autorisé",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
 
 class ChatRequest(BaseModel):
     message: str
@@ -163,34 +141,73 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.post("/auth/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nom d'utilisateur ou mot de passe incorrect",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user["role"]}
+    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": config.JWT_EXPIRE_MINUTES * 60
+    }
+
+
+@app.get("/auth/login", response_class=HTMLResponse)
+def login_page():
+    html_path = os.path.join(os.path.dirname(__file__), "login.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/auth/me")
+def get_current_user(current_user: dict = Depends(verify_token)):
+    return current_user
+
+
 @app.get("/stats")
-def get_stats():
+def get_stats(current_user: dict = Depends(verify_token)):
     from chat import get_analytics
-    ANALYTICS = get_analytics()
     import datetime
-    questions = ANALYTICS["questions"]
-    times = ANALYTICS["response_times"]
+    analytics = get_analytics()
+    questions = analytics.get("questions", [])
+    times = analytics.get("response_times", [])
     from collections import Counter
     top_questions = Counter(questions).most_common(5)
     avg_time = round(sum(times) / len(times), 2) if times else 0
-
+    start_time_str = analytics.get("start_time")
+    uptime = 0
+    if start_time_str:
+        try:
+            start_dt = datetime.datetime.fromisoformat(start_time_str)
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
+            uptime = round(
+                (datetime.datetime.now(datetime.timezone.utc) - start_dt
+                ).total_seconds() / 3600, 1
+            )
+        except Exception:
+            uptime = 0
     return {
-        "total_conversations": ANALYTICS["total_conversations"],
-        "total_messages": ANALYTICS["total_messages"],
+        "total_conversations": analytics.get("total_conversations", 0),
+        "total_messages": analytics.get("total_messages", 0),
         "avg_response_time_seconds": avg_time,
         "top_questions": [{"question": q, "count": c} for q, c in top_questions],
-        "hourly_conversations": ANALYTICS["hourly_conversations"],
-        "start_time": ANALYTICS["start_time"],
-        "uptime_hours": round(
-            (datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(
-                ANALYTICS["start_time"].replace("+00:00", "")
-            ).replace(tzinfo=datetime.timezone.utc)).total_seconds() / 3600, 1
-        ) if ANALYTICS["start_time"] else 0,
+        "hourly_conversations": analytics.get("hourly_conversations", {}),
+        "start_time": start_time_str,
+        "uptime_hours": uptime
     }
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
-def dashboard(username: str = Depends(verify_dashboard_auth)):
+def dashboard():
     html_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
     with open(html_path, "r", encoding="utf-8") as f:
         return f.read()

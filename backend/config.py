@@ -44,6 +44,11 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
 DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "novamart2026")
 
+# JWT — authentification du dashboard.
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "novamart-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "480"))  # 8 heures
+
 
 def _is_real_value(value: str | None) -> bool:
     """True si la valeur existe, n'est pas vide et n'est pas un placeholder 'your_...'."""
