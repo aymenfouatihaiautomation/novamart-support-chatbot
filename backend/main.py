@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import uuid
@@ -21,7 +22,7 @@ load_dotenv()
 
 from langsmith import traceable
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -339,6 +340,59 @@ async def chat_stream_endpoint(request: Request, payload: ChatRequest) -> Stream
             yield f"data: {json.dumps(chunk)}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/chat/vision")
+@limiter.limit("10/minute")
+async def chat_vision_endpoint(
+    request: Request,
+    message: str = Form(default=""),
+    session_id: str = Form(default=""),
+    image: UploadFile = File(...)
+):
+    # Valide le type d'image
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if image.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Type d'image non supporté. Utilisez : {', '.join(allowed_types)}"
+        )
+
+    # Valide la taille (max 4MB)
+    contents = await image.read()
+    if len(contents) > 4 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Image trop grande. Maximum 4MB."
+        )
+
+    # Encode en base64
+    image_base64 = base64.b64encode(contents).decode("utf-8")
+
+    # Génère la réponse
+    from chat import vision_chat
+    response_text = vision_chat(
+        message=message,
+        image_base64=image_base64,
+        image_media_type=image.content_type
+    )
+
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    logger.info("vision_request", extra={
+        "extra": {
+            "session_id": session_id,
+            "image_type": image.content_type,
+            "image_size_kb": len(contents) // 1024,
+            "endpoint": "/chat/vision"
+        }
+    })
+
+    return {
+        "response": response_text,
+        "session_id": session_id
+    }
 
 
 if __name__ == "__main__":

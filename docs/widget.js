@@ -67,7 +67,26 @@
       placeholder: "Écrivez votre message…"
     });
     var send = h("button", { class: "nm-send", "aria-label": "Envoyer", text: "➤" });
-    var inputBar = h("div", { class: "nm-input-bar" }, [input, send]);
+
+    var imageInput = h("input", {
+      type: "file",
+      id: "nm-image-input",
+      accept: "image/*",
+      style: "display:none",
+      onchange: "handleImageUpload(event)"
+    });
+    var imageBtn = h("button", {
+      id: "nm-image-btn",
+      title: "Envoyer une image",
+      style: "background:none;border:none;cursor:pointer;font-size:20px;" +
+             "padding:4px 8px;color:#6b7280;flex-shrink:0",
+      text: "📎"
+    });
+    imageBtn.addEventListener("click", function () {
+      document.getElementById("nm-image-input").click();
+    });
+
+    var inputBar = h("div", { class: "nm-input-bar" }, [imageInput, imageBtn, input, send]);
 
     var panel = h("div", { id: "novamart-panel" }, [header, messages, inputBar]);
     document.body.appendChild(h("div", { id: "novamart-widget" }, [fab, panel]));
@@ -104,6 +123,17 @@
   function addUserMessage(text) {
     var bubble = h("div", { class: "nm-bubble" });
     bubble.textContent = text;
+    els.messages.appendChild(h("div", { class: "nm-msg user" }, [bubble]));
+    scrollDown();
+  }
+
+  function addUserImage(dataUrl) {
+    var bubble = h("div", { class: "nm-bubble" });
+    var img = h("img", {
+      src: dataUrl,
+      style: "max-width:200px;max-height:150px;border-radius:8px;display:block"
+    });
+    bubble.appendChild(img);
     els.messages.appendChild(h("div", { class: "nm-msg user" }, [bubble]));
     scrollDown();
   }
@@ -215,6 +245,55 @@
         console.log("[sendContact] erreur:", err);
         if (wrap) wrap.innerHTML = "<p>❌ Une erreur est survenue, réessayez plus tard.</p>";
       });
+  };
+
+  /* ---------------------------------------------------------------- image */
+
+  // Expose globalement : l'input file l'appelle via onchange="handleImageUpload(event)".
+  window.handleImageUpload = function (event) {
+    var file = event.target.files[0];
+    if (!file) return;
+
+    // Vérifie la taille (4MB max)
+    if (file.size > 4 * 1024 * 1024) {
+      addBotMessage("❌ Image trop grande. Maximum 4MB.");
+      event.target.value = "";
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      // Affiche l'image dans le chat (côté utilisateur)
+      addUserImage(e.target.result);
+
+      // Affiche l'indicateur de chargement
+      var pending = addTypingBubble();
+
+      var formData = new FormData();
+      formData.append("image", file);
+      formData.append("message", "Que vois-tu dans cette image ? Peux-tu m'aider ?");
+      formData.append("session_id", sessionId || "");
+
+      fetch(API_BASE + "/chat/vision", {
+        method: "POST",
+        body: formData
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.session_id) sessionId = data.session_id;
+          pending.classList.remove("nm-bubble-typing");
+          pending.innerHTML = marked.parse(stripMarkers(data.response || "Je n'ai pas pu analyser cette image."));
+          scrollDown();
+        })
+        .catch(function () {
+          pending.classList.remove("nm-bubble-typing");
+          pending.textContent = "❌ Erreur lors de l'analyse de l'image.";
+          scrollDown();
+        });
+
+      event.target.value = "";
+    };
+    reader.readAsDataURL(file);
   };
 
   /* --------------------------------------------------------------- submit */

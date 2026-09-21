@@ -475,7 +475,7 @@ def vision_chat(message: str, image_base64: str, image_media_type: str = "image/
         )
 
         response = client.chat.completions.create(
-            model="qwen/qwen3-32b",
+            model="qwen/qwen3.8-27b",
             messages=[
                 {
                     "role": "user",
