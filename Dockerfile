@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copie le code backend
-COPY backend/ .
+COPY . /app/
 
 # Variables d'environnement par défaut
 ENV PYTHONUNBUFFERED=1
@@ -22,4 +22,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 EXPOSE 8000
 
 # Lance uvicorn
+WORKDIR /app/backend
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
