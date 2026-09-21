@@ -21,6 +21,41 @@ import redis
 
 import config
 
+THEMES = {
+    "Retours & Remboursements": [
+        "retour", "remboursement", "rembourser", "renvoyer",
+        "renvoi", "retourner", "restituer", "return", "refund"
+    ],
+    "Livraison & Délais": [
+        "livraison", "délai", "livrer", "expédition", "transport",
+        "délais", "livré", "expedition", "delivery", "shipping",
+        "combien de temps", "quand"
+    ],
+    "Catalogue & Produits": [
+        "produit", "catalogue", "article", "prix", "stock",
+        "disponible", "acheter", "product", "price"
+    ],
+    "Compte & Commandes": [
+        "commande", "compte", "suivi", "facture", "order",
+        "commander", "achat", "payer", "paiement"
+    ],
+    "Autres": []
+}
+
+
+def classify_question(question: str) -> str:
+    """Classifie une question dans un thème basé sur les mots-clés."""
+    question_lower = question.lower()
+    scores = {}
+    for theme, keywords in THEMES.items():
+        if theme == "Autres":
+            continue
+        score = sum(1 for kw in keywords if kw in question_lower)
+        scores[theme] = score
+    best_theme = max(scores, key=scores.get)
+    return best_theme if scores[best_theme] > 0 else "Autres"
+
+
 MOCK_RESPONSE = "Je suis NovaMart Support. [MOCK - AWS not configured]"
 NO_CONTEXT_RESPONSE = (
     "Je n'ai pas trouvé d'information sur ce sujet dans notre documentation. [NO_CONTEXT]"
@@ -188,6 +223,7 @@ def get_analytics() -> dict:
         "questions": [],
         "response_times": [],
         "hourly_conversations": {},
+        "theme_counts": {},
         "start_time": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
 
@@ -298,6 +334,10 @@ def chat(message: str, session_id: str) -> str:
     analytics["questions"].append(normalized)
     del analytics["questions"][:-100]
 
+    analytics.setdefault("theme_counts", {})
+    theme = classify_question(normalized)
+    analytics["theme_counts"][theme] = analytics["theme_counts"].get(theme, 0) + 1
+
     history.append({"role": "user", "content": message})
 
     try:
@@ -351,6 +391,10 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
     # Normalise : minuscules + strip espaces
     normalized = message.strip().lower()
     analytics["questions"].append(normalized)
+
+    analytics.setdefault("theme_counts", {})
+    theme = classify_question(normalized)
+    analytics["theme_counts"][theme] = analytics["theme_counts"].get(theme, 0) + 1
 
     start_time_req = time.time()
 

@@ -202,7 +202,8 @@ def get_stats(current_user: dict = Depends(verify_token)):
         "top_questions": [{"question": q, "count": c} for q, c in top_questions],
         "hourly_conversations": analytics.get("hourly_conversations", {}),
         "start_time": start_time_str,
-        "uptime_hours": uptime
+        "uptime_hours": uptime,
+        "theme_counts": analytics.get("theme_counts", {})
     }
 
 

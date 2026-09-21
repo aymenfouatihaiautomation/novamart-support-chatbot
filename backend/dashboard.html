@@ -193,6 +193,11 @@ body {
             </ul>
         </div>
     </div>
+
+    <div class="chart-card" style="margin-top: 20px;">
+        <h2>🏷️ Thèmes populaires</h2>
+        <div id="themes-list">Chargement...</div>
+    </div>
 </div>
 
 <script>
@@ -276,6 +281,31 @@ async function loadStats() {
                 '<li><span class="q-text">' + q.question + '</span>' +
                 '<span class="q-count">' + q.count + 'x</span></li>'
             ).join('');
+        }
+
+        // Thèmes
+        const themes = data.theme_counts || {};
+        const sortedThemes = Object.entries(themes)
+            .sort((a, b) => b[1] - a[1]);
+
+        if (sortedThemes.length === 0) {
+            document.getElementById('themes-list').innerHTML =
+                '<p style="color:#9ca3af;text-align:center;padding:20px">Aucune donnée</p>';
+        } else {
+            const maxCount = sortedThemes[0][1];
+            document.getElementById('themes-list').innerHTML = sortedThemes.map(([theme, count]) => {
+                const pct = Math.round((count / maxCount) * 100);
+                return `
+                <div style="margin-bottom:16px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-size:14px;color:#374151">${theme}</span>
+                        <span style="font-size:14px;font-weight:600;color:#2563EB">${count}x</span>
+                    </div>
+                    <div style="background:#E5E7EB;border-radius:4px;height:8px">
+                        <div style="background:#2563EB;width:${pct}%;height:8px;border-radius:4px;transition:width 0.3s"></div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
     } catch(e) {
