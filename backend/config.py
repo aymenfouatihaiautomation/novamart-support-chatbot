@@ -40,6 +40,9 @@ SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL")
 # fonctionne depuis Railway contrairement au SMTP sortant).
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
+# HubSpot CRM — cree/met a jour un contact a chaque demande via /contact.
+HUBSPOT_API_KEY = os.getenv("HUBSPOT_API_KEY")
+
 # HTTP Basic Auth pour /dashboard.
 DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
 DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "novamart2026")

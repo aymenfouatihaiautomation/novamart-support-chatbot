@@ -35,6 +35,7 @@ import resend as resend_client
 import config
 from auth import authenticate_user, create_access_token, verify_token
 from chat import chat as _chat, get_history, stream_chat as _stream_chat
+from crm import create_hubspot_contact
 
 # Trace chaque execution du pipeline RAG (retrieve() + generate()) vers LangSmith.
 chat = traceable(name="novamart-rag-pipeline")(_chat)
@@ -281,7 +282,20 @@ def contact_agent(payload: ContactRequest):
         }
 
         email = resend_client.Emails.send(params)
-        return {"success": True, "id": email.get("id", "")}
+
+        contact_id = create_hubspot_contact(
+            name=payload.name,
+            email=payload.email,
+            message=payload.message,
+            session_id=payload.session_id,
+            conversation_history=history
+        )
+
+        return {
+            "success": True,
+            "id": email.get("id", ""),
+            "hubspot_contact_id": contact_id
+        }
 
     except Exception as e:
         return {"success": False, "error": str(e)}
