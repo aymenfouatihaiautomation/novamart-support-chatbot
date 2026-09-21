@@ -6,8 +6,13 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 from main import app
+from auth import create_access_token
 
 client = TestClient(app)
+
+
+def get_test_token():
+    return create_access_token({"sub": "admin", "role": "admin"})
 
 # ============================================================
 # Tests endpoints de base
@@ -21,7 +26,8 @@ def test_health():
 
 def test_stats_structure():
     """L'endpoint stats doit retourner les bonnes clés."""
-    response = client.get("/stats")
+    token = get_test_token()
+    response = client.get("/stats", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     data = response.json()
     assert "total_conversations" in data
@@ -31,7 +37,7 @@ def test_stats_structure():
 
 def test_dashboard_returns_html():
     """Le dashboard doit retourner du HTML."""
-    response = client.get("/dashboard", auth=("admin", "novamart2026"))
+    response = client.get("/dashboard")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert "NovaMart" in response.text
