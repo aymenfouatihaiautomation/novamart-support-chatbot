@@ -453,3 +453,49 @@ def stream_chat(message: str, session_id: str) -> Generator[str, None, None]:
         analytics["response_times"] = analytics["response_times"][-99:]
     analytics["response_times"].append(round(response_time, 2))
     save_analytics(analytics)
+
+
+def vision_chat(message: str, image_base64: str, image_media_type: str = "image/jpeg") -> str:
+    """
+    Répond à une question en analysant une image via Groq vision model.
+    """
+    if not config.GROQ_API_KEY or config.GROQ_API_KEY.startswith("your_"):
+        return "Je suis NovaMart Support. [MOCK - Groq not configured]"
+
+    try:
+        from groq import Groq
+        client = Groq(api_key=config.GROQ_API_KEY)
+
+        system_prompt = (
+            "Tu es l'assistant support de NovaMart, une boutique d'électronique en ligne. "
+            "Quand un client t'envoie une image, analyse-la et aide-le à trouver "
+            "des produits similaires dans notre catalogue ou réponds à ses questions. "
+            "Notre catalogue inclut : smartphones, laptops, casques audio, accessoires. "
+            "Sois concis et utile. Réponds dans la langue du client."
+        )
+
+        response = client.chat.completions.create(
+            model="qwen/qwen3-32b",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": message if message else "Que vois-tu dans cette image ? Comment puis-je t'aider ?"
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{image_media_type};base64,{image_base64}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens=1024
+        )
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"Je suis NovaMart Support. Une erreur est survenue avec l'analyse d'image : {str(e)}"
